@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>七宗罪 × 七美德 · 灵魂测试</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Roboto,sans-serif; }
+  body {
+    min-height:100vh;
+    background: linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f0f1a 100%);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    color:#e8e8e8;
+  }
+  .card {
+    max-width:720px; width:100%;
+    background: rgba(22,33,62,0.85);
+    border-radius:32px; padding:36px 30px;
+    box-shadow:0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+  }
+  h1 { font-size:1.9rem; color:#f0e6d2; margin-bottom:8px; font-weight:700; letter-spacing:1px; }
+  h1 .accent { color:#e8b44a; }
+  .subhead { color:#8b93a7; font-size:0.95rem; margin-bottom:28px; border-left:3px solid #e8b44a; padding-left:14px; line-height:1.5; }
+
+  /* 密码区 */
+  .pass-gate { text-align:center; padding:20px 0; }
+  .pass-gate h2 { font-size:1.3rem; color:#e8b44a; margin-bottom:10px; font-weight:600; }
+  .pass-gate p { color:#8b93a7; margin-bottom:22px; font-size:0.95rem; }
+  .input-group { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+  .input-group input {
+    flex:1 1 200px; padding:15px 20px; border:1.5px solid #2e3a5c; border-radius:50px;
+    font-size:1rem; background:#0f1526; color:#e8e8e8; outline:none; text-align:center;
+  }
+  .input-group input:focus { border-color:#e8b44a; box-shadow:0 0 0 3px rgba(232,180,74,0.15); }
+  .input-group button {
+    background: linear-gradient(135deg,#e8b44a,#d4a03a); border:none; color:#1a1a2e;
+    padding:15px 36px; border-radius:50px; font-size:1rem; font-weight:700; cursor:pointer;
+  }
+  .input-group button:hover { filter:brightness(1.1); }
+  .error-msg { color:#ff7b7b; font-size:0.85rem; margin-top:12px; min-height:20px; }
+
+  /* 测试区 */
+  .quiz-area { display:none; }
+  .progress {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:20px; font-size:0.85rem; color:#8b93a7;
+  }
+  .progress .bar {
+    flex:1; height:4px; background:#1e2740; border-radius:4px; margin:0 14px; overflow:hidden;
+  }
+  .progress .bar-inner { height:100%; background:linear-gradient(90deg,#e8b44a,#f0d080); width:0%; transition:width 0.3s; }
+  .question-text { font-size:1.25rem; font-weight:600; color:#f0e6d2; margin-bottom:24px; line-height:1.5; }
+  .options { display:flex; flex-direction:column; gap:12px; margin-bottom:26px; }
+  .option-btn {
+    background:#131b30; border:1.5px solid #233155; padding:16px 20px; border-radius:16px;
+    font-size:1rem; text-align:left; color:#d0d6e0; cursor:pointer; transition:0.2s;
+    display:flex; align-items:center; gap:14px; line-height:1.4;
+  }
+  .option-btn:hover { background:#1a2540; border-color:#3a4a7a; }
+  .option-btn.selected { background:#1e2c52; border-color:#e8b44a; box-shadow:0 0 0 1px rgba(232,180,74,0.3); }
+  .option-btn .letter {
+    background:#233155; width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; font-weight:700; color:#8b93a7; flex-shrink:0; font-size:0.9rem;
+  }
+  .option-btn.selected .letter { background:#e8b44a; color:#1a1a2e; }
+  .quiz-footer { display:flex; justify-content:space-between; gap:12px; }
+  .btn-secondary { background:transparent; border:1.5px solid #2e3a5c; color:#8b93a7; padding:13px 24px; border-radius:50px; cursor:pointer; font-weight:600; }
+  .btn-secondary:disabled { opacity:0.3; cursor:not-allowed; }
+  .btn-primary { background:linear-gradient(135deg,#e8b44a,#d4a03a); border:none; color:#1a1a2e; padding:13px 30px; border-radius:50px; font-weight:700; cursor:pointer; }
+  .btn-primary:hover { filter:brightness(1.1); }
+
+  /* 结果区 */
+  .result-area { display:none; }
+  .result-card { text-align:center; }
+  .result-tag {
+    display:inline-block; background:linear-gradient(135deg,#e8b44a,#d4a03a); color:#1a1a2e;
+    padding:8px 24px; border-radius:50px; font-size:1.2rem; font-weight:800; margin-bottom:16px; letter-spacing:0.5px;
+  }
+  .result-title { font-size:1.5rem; font-weight:700; color:#f0e6d2; margin-bottom:20px; }
+
+  /* 雷达图 */
+  .radar-wrap { display:flex; justify-content:center; margin:10px 0 24px; }
+  canvas { max-width:100%; }
+
+  /* 结果文案 */
+  .result-desc {
+    background:#131b30; border-radius:18px; padding:22px 20px; margin-bottom:22px;
+    font-size:1rem; color:#c8cfd8; line-height:1.7; text-align:left; border:1px solid #233155;
+  }
+  .result-desc .highlight { color:#e8b44a; font-weight:600; }
+  .result-desc .savage { color:#ff9b9b; font-weight:600; }
+  .result-desc .funny { color:#8ee8b0; font-weight:600; }
+
+  .again-btn {
+    background:transparent; border:1.5px solid #e8b44a; color:#e8b44a;
+    padding:14px 40px; border-radius:50px; cursor:pointer; font-weight:700; font-size:1rem;
+  }
+  .again-btn:hover { background:rgba(232,180,74,0.1); }
+
+  .hidden { display:none !important; }
+  .mt-16 { margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>七宗罪 <span class="accent">×</span> 七美德</h1>
+  <div class="subhead">灵魂成分检测 · 18 题测出你内心住着天使还是恶魔</div>
+
+  <!-- 密码区 -->
+  <div id="passGate" class="pass-gate">
+    <h2>🔐 请输入密码</h2>
+    <p>购买后获得专属密码，输入开始测试</p>
+    <div class="input-group">
+      <input type="text" id="passwordInput" placeholder="例如: SOUL-001" autocomplete="off">
+      <button id="submitPassBtn">开始测试</button>
+    </div>
+    <div id="passError" class="error-msg"></div>
+  </div>
+
+  <!-- 测试区 -->
+  <div id="quizArea" class="quiz-area">
+    <div class="progress">
+      <span id="qNum">1 / 18</span>
+      <div class="bar"><div class="bar-inner" id="barInner"></div></div>
+      <span id="percent">6%</span>
+    </div>
+    <div id="questionText" class="question-text"></div>
+    <div id="optionsContainer" class="options"></div>
+    <div class="quiz-footer">
+      <button id="prevBtn" class="btn-secondary" disabled>← 上一题</button>
+      <button id="nextBtn" class="btn-primary">下一题 →</button>
+    </div>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="resultArea" class="result-area">
+    <div class="result-card">
+      <div class="result-tag" id="resultTag">标签加载中</div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="radar-wrap">
+        <canvas id="radarCanvas" width="360" height="320"></canvas>
+      </div>
+      <div class="result-desc" id="resultDesc"></div>
+      <button id="restartBtn" class="again-btn">重新测试</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 1. 密码 ==========
+const VALID_PASSWORDS = ['S001'];
+
+// ========== 2. 题目（18题，情境式） ==========
+// 每个选项给 1~2 个维度加分
+const questions = [
+  { text: "你最好的朋友突然宣布升职加薪，你的第一反应是？", options: [
+    { text: "真心替他高兴，马上约饭庆祝", scores: { charity:3, kindness:1 } },
+    { text: "表面恭喜，心里有点酸", scores: { envy:3, pride:1 } },
+    { text: "立刻反思自己是不是落后了", scores: { envy:2, pride:2 } },
+    { text: "替他开心，但暗暗下决心要追上", scores: { diligence:3, envy:1 } }
+  ]},
+  { text: "深夜刷到美食视频，你怎么办？", options: [
+    { text: "马上点外卖，先吃再说", scores: { gluttony:3 } },
+    { text: "忍着，喝杯水去睡觉", scores: { temperance:3, chastity:1 } },
+    { text: "收藏起来，明天做", scores: { diligence:2, temperance:2 } },
+    { text: "看别人吃就等于自己吃了", scores: { sloth:3, gluttony:1 } }
+  ]},
+  { text: "你在网上看到一条让你非常生气的言论，你会？", options: [
+    { text: "立刻回复怼回去，火力全开", scores: { wrath:3 } },
+    { text: "打了一大段字，最后又删了", scores: { patience:3, wrath:1 } },
+    { text: "截图发给朋友吐槽", scores: { wrath:2, envy:1 } },
+    { text: "不理会，跟自己没关系", scores: { patience:3, temperance:1 } }
+  ]},
+  { text: "朋友问你借一笔不小的钱，你会？", options: [
+    { text: "二话不说借，朋友比钱重要", scores: { charity:3, kindness:2 } },
+    { text: "借，但心里有点忐忑", scores: { charity:2, envy:1 } },
+    { text: "找理由推掉，钱的事不想掺和", scores: { greed:3 } },
+    { text: "只借一小部分，说自己也紧张", scores: { greed:2, prudence:1 } }
+  ]},
+  { text: "周末的早上醒来，你通常会？", options: [
+    { text: "继续躺着，刷手机到中午", scores: { sloth:3 } },
+    { text: "起来做早饭、收拾房间", scores: { diligence:3, temperance:1 } },
+    { text: "赖一会儿，然后起来做点事", scores: { sloth:1, diligence:2 } },
+    { text: "直接睡到自然醒，管他呢", scores: { sloth:3, gluttony:1 } }
+  ]},
+  { text: "走在路上，有陌生人突然对你很凶，你会？", options: [
+    { text: "立刻凶回去，谁怕谁", scores: { wrath:3 } },
+    { text: "愣住，然后快步离开", scores: { patience:2, chastity:1 } },
+    { text: "心里骂了一万句，脸上不动声色", scores: { wrath:2, patience:1 } },
+    { text: "想想他可能遇到什么难处了", scores: { kindness:3, patience:2 } }
+  ]},
+  { text: "你看到别人的朋友圈全是精致生活照，你的感受是？", options: [
+    { text: "羡慕，默默点个赞", scores: { envy:2, kindness:1 } },
+    { text: "心里想：肯定修图了", scores: { envy:2, pride:2 } },
+    { text: "觉得各人有各人的活法，无所谓", scores: { temperance:3 } },
+    { text: "受到激励，自己也想过得更好", scores: { diligence:3, envy:1 } }
+  ]},
+  { text: "你完成了一件很得意的事，你会？", options: [
+    { text: "发朋友圈，让大家都知道", scores: { pride:3 } },
+    { text: "偷偷开心，不告诉别人", scores: { humility:3 } },
+    { text: "只告诉最亲近的人", scores: { humility:2, kindness:1 } },
+    { text: "发圈，但假装轻描淡写", scores: { pride:2, envy:1 } }
+  ]},
+  { text: "你看到路边有只流浪猫，你会？", options: [
+    { text: "马上买点吃的喂它", scores: { kindness:3, charity:1 } },
+    { text: "拍张照，发个朋友圈", scores: { pride:1, kindness:1 } },
+    { text: "心里心疼，但赶时间走了", scores: { kindness:1, sloth:1 } },
+    { text: "联系附近救助站问问", scores: { charity:3, kindness:2 } }
+  ]},
+  { text: "如果你可以拥有一种超能力，你选？", options: [
+    { text: "看透别人心里的想法", scores: { envy:2, pride:2 } },
+    { text: "让所有人都喜欢我", scores: { pride:3, envy:1 } },
+    { text: "治愈任何人的病痛", scores: { kindness:3, charity:2 } },
+    { text: "永远不用睡觉也不会累", scores: { diligence:3 } }
+  ]},
+  { text: "半夜饿了，冰箱里只有一盒蛋糕，你会？", options: [
+    { text: "全吃掉，反正明天再减肥", scores: { gluttony:3 } },
+    { text: "吃两口解馋，剩下的放回去", scores: { temperance:3 } },
+    { text: "算了，饿着睡吧", scores: { chastity:2, sloth:1 } },
+    { text: "纠结很久，最后全吃了", scores: { gluttony:2, sloth:1 } }
+  ]},
+  { text: "你朋友做了一件让你很失望的事，你会？", options: [
+    { text: "直接说出来，不留情面", scores: { wrath:2, pride:1 } },
+    { text: "憋着不说，自己消化", scores: { patience:2, sloth:1 } },
+    { text: "慢慢疏远，不再深交", scores: { pride:2, patience:1 } },
+    { text: "找机会好好聊，把话说开", scores: { kindness:3, patience:2 } }
+  ]},
+  { text: "你中了 500 万，第一件事做什么？", options: [
+    { text: "先给自己买买买", scores: { greed:3, gluttony:1 } },
+    { text: "给父母转一大笔", scores: { charity:3, kindness:2 } },
+    { text: "存起来，一分不动", scores: { greed:2, temperance:2 } },
+    { text: "捐一部分给需要的人", scores: { charity:3, kindness:1 } }
+  ]},
+  { text: "朋友在聚会上当众开了一个让你不舒服的玩笑，你会？", options: [
+    { text: "当场怼回去，让他下不来台", scores: { wrath:3 } },
+    { text: "尴尬笑笑，回家再生气", scores: { patience:3, wrath:1 } },
+    { text: "心里记下来，以后少来往", scores: { envy:2, pride:1 } },
+    { text: "私下跟他说你不舒服", scores: { kindness:2, patience:1 } }
+  ]},
+  { text: "你对自己的身材/外貌满意吗？", options: [
+    { text: "满意，觉得自己挺好看的", scores: { pride:2, chastity:2 } },
+    { text: "经常不满意，想改变", scores: { envy:2, gluttony:1 } },
+    { text: "还好，不太在意这些", scores: { temperance:2, humility:1 } },
+    { text: "嘴上说不在意，心里很在意", scores: { pride:2, envy:2 } }
+  ]},
+  { text: "你在排队时，前面有人插队，你会？", options: [
+    { text: "直接大声说：请排队", scores: { wrath:2, pride:1 } },
+    { text: "心里不爽，但忍了", scores: { patience:3 } },
+    { text: "翻个白眼，继续等", scores: { patience:1, wrath:1 } },
+    { text: "拍拍他，礼貌提醒", scores: { kindness:3, patience:1 } }
+  ]},
+  { text: "如果明天是世界末日，今晚你会？", options: [
+    { text: "找最爱的人一起吃顿饭", scores: { kindness:3, chastity:1 } },
+    { text: "疯狂发泄，想干嘛干嘛", scores: { wrath:3, gluttony:2 } },
+    { text: "一个人安静待着，想想这一生", scores: { temperance:3, humility:2 } },
+    { text: "继续上班，反正躲不过", scores: { sloth:2, diligence:1 } }
+  ]},
+  { text: "你觉得自己最像哪种人？", options: [
+    { text: "外人眼里很好，内心偶尔阴暗", scores: { pride:3, envy:1 } },
+    { text: "外表冷淡，其实心很软", scores: { kindness:3, humility:1 } },
+    { text: "嘴上没正形，心里很清醒", scores: { temperance:2, patience:2 } },
+    { text: "看心情，天使恶魔随时切换", scores: { pride:1, wrath:1, kindness:1, envy:1 } }
+  ]}
+];
+
+// ========== 3. 维度定义 ==========
+const DIMENSIONS = [
+  { key:'pride',      name:'傲慢', sin:true },
+  { key:'greed',      name:'贪婪', sin:true },
+  { key:'envy',       name:'嫉妒', sin:true },
+  { key:'wrath',      name:'暴怒', sin:true },
+  { key:'lust',       name:'色欲', sin:true },
+  { key:'gluttony',   name:'暴食', sin:true },
+  { key:'sloth',      name:'懒惰', sin:true },
+  { key:'chastity',   name:'贞洁', sin:false },
+  { key:'temperance', name:'节制', sin:false },
+  { key:'charity',    name:'慷慨', sin:false },
+  { key:'diligence',  name:'勤奋', sin:false },
+  { key:'patience',   name:'耐心', sin:false },
+  { key:'kindness',   name:'仁慈', sin:false },
+  { key:'humility',   name:'谦虚', sin:false }
+];
+
+// ========== 4. 标签 & 文案 ==========
+// 根据最高分和最低分组合，生成标签
+function getTagAndDesc(scores) {
+  const sorted = DIMENSIONS.map(d => ({ ...d, score: scores[d.key] || 0 }));
+  const maxSin = Math.max(...sorted.filter(d => d.sin).map(d => d.score));
+  const maxVirtue = Math.max(...sorted.filter(d => !d.sin).map(d => d.score));
+  const topSin = sorted.find(d => d.sin && d.score === maxSin);
+  const topVirtue = sorted.find(d => !d.sin && d.score === maxVirtue);
+
+  // 标签池：以「最突出的罪 + 最突出的美德」组合
+  const tagMap = {
+    'pride_kindness': '傲娇善人',
+    'pride_patience': '嘴硬心软型',
+    'pride_humility': '自我拉扯型',
+    'greed_charity': '抠门大方人',
+    'greed_diligence': '精打细算家',
+    'greed_temperance': '理性守财奴',
+    'envy_kindness': '酸完就心软',
+    'envy_diligence': '暗自较劲型',
+    'envy_patience': '心里翻江倒海',
+    'wrath_patience': '一点就炸但憋着',
+    'wrath_kindness': '嘴毒心软怪',
+    'wrath_humility': '爆完就后悔',
+    'sloth_diligence': '懒但能干型',
+    'sloth_temperance': '躺平美食家',
+    'sloth_kindness': '懒得争但善良',
+    'gluttony_temperance': '吃前纠结型',
+    'gluttony_charity': '吃货大善人',
+    'gluttony_diligence': '吃饱才有力气干',
+    'lust_chastity': '嘴上很花的小纯',
+    'lust_temperance': '脑内小剧场',
+    'lust_kindness': '温柔小暧昧',
+  };
+
+  const key = `${topSin.key}_${topVirtue.key}`;
+  let tag = tagMap[key] || '复杂的灵魂';
+  let title = `你的核心成分：${topSin.name} × ${topVirtue.name}`;
+
+  // 生成扎心+好笑的文案
+  const sinLines = {
+    pride: '你的自尊心比喜马拉雅山还高。',
+    greed: '钱不是万能的，但没有钱你浑身难受。你的钱包比你的心还紧。',
+    envy: '看到讨厌的熟人好，你嘴上说恭喜，心里已经翻了八百个白眼。',
+    wrath: '你的怒气值像高压锅，平时不响，一响就炸。',
+    lust: '你的内心戏比电视剧还多，但现实中连搭讪都不敢。',
+    gluttony: '你的减肥计划永远从明天开始，今晚先吃了再说。',
+    sloth: '你的床是你最忠诚的伴侣，起床是你每天最大的挑战。'
+  };
+  const virtueLines = {
+    chastity: '但你内心其实很纯粹，对感情有自己坚持的底线。',
+    temperance: '你懂得克制，很多冲动都被你自己按了下去。',
+    charity: '你对朋友很大方，宁可自己当义母义父也不愿意亏待朋友。',
+    diligence: '你其实很拼，只是偶尔不想让别人看出来。',
+    patience: '你比你以为的更能忍，只是偶尔憋出内伤。',
+    kindness: '你心软得像棉花糖，看不得别人难过。',
+    humility: '你比很多人都谦虚，从不觉得自己有多了不起。'
+  };
+
+  let desc = `
+    <p>${sinLines[topSin.key] || ''}</p>
+    <p style="margin-top:10px;">${virtueLines[topVirtue.key] || ''}</p>
+    <p style="margin-top:14px;color:#8b93a7;font-size:0.92rem;">综合来看，你是一个 <span class="highlight">${topSin.name}</span> 和 <span class="highlight">${topVirtue.name}</span> 拉扯的人。有时候你自己都搞不懂自己，但这就是你——复杂、真实、有点矛盾，但很可爱。</p>
+  `;
+
+  return { tag, title, desc };
+}
+
+// ========== 5. DOM ==========
+const passGate = document.getElementById('passGate');
+const quizArea = document.getElementById('quizArea');
+const resultArea = document.getElementById('resultArea');
+const passwordInput = document.getElementById('passwordInput');
+const submitPassBtn = document.getElementById('submitPassBtn');
+const passError = document.getElementById('passError');
+const qNum = document.getElementById('qNum');
+const barInner = document.getElementById('barInner');
+const percent = document.getElementById('percent');
+const questionText = document.getElementById('questionText');
+const optionsContainer = document.getElementById('optionsContainer');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const resultTag = document.getElementById('resultTag');
+const resultTitle = document.getElementById('resultTitle');
+const resultDesc = document.getElementById('resultDesc');
+const restartBtn = document.getElementById('restartBtn');
+const radarCanvas = document.getElementById('radarCanvas');
+
+let currentIndex = 0;
+let answers = new Array(questions.length).fill(null);
+let scores = {};
+DIMENSIONS.forEach(d => scores[d.key] = 0);
+
+// ========== 6. 密码验证 ==========
+submitPassBtn.addEventListener('click', () => {
+  const pwd = passwordInput.value.trim().toUpperCase();
+  if (!pwd) { passError.textContent = '请输入密码'; return; }
+  if (!VALID_PASSWORDS.includes(pwd)) { passError.textContent = '密码不正确，请检查后重试'; return; }
+  passError.textContent = '';
+  passGate.style.display = 'none';
+  quizArea.style.display = 'block';
+  resetQuiz();
+  renderQuestion(0);
+});
+
+passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitPassBtn.click(); });
+passwordInput.addEventListener('input', () => passError.textContent = '');
+
+// ========== 7. 测试逻辑 ==========
+function resetQuiz() {
+  currentIndex = 0;
+  answers = new Array(questions.length).fill(null);
+  DIMENSIONS.forEach(d => scores[d.key] = 0);
+}
+
+function updateProgress() {
+  const total = questions.length;
+  const current = currentIndex + 1;
+  qNum.textContent = `${current} / ${total}`;
+  const pct = Math.round((current / total) * 100);
+  barInner.style.width = pct + '%';
+  percent.textContent = pct + '%';
+  prevBtn.disabled = currentIndex === 0;
+  nextBtn.textContent = currentIndex === total - 1 ? '查看结果 →' : '下一题 →';
+}
+
+function renderQuestion(index) {
+  currentIndex = index;
+  const q = questions[index];
+  questionText.textContent = q.text;
+  optionsContainer.innerHTML = '';
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.classList.add('option-btn');
+    if (answers[index] === i) btn.classList.add('selected');
+
+    const letter = document.createElement('span');
+    letter.classList.add('letter');
+    letter.textContent = String.fromCharCode(65 + i);
+    btn.appendChild(letter);
+    btn.appendChild(document.createTextNode(opt.text));
+
+    btn.addEventListener('click', () => {
+      answers[index] = i;
+      optionsContainer.querySelectorAll('.option-btn').forEach((b, j) => {
+        b.classList.toggle('selected', j === i);
+      });
+    });
+
+    optionsContainer.appendChild(btn);
+  });
+
+  updateProgress();
+}
+
+function goNext() {
+  if (answers[currentIndex] === null) { alert('请先选择一个选项哦 😊'); return; }
+  if (currentIndex === questions.length - 1) { showResult(); }
+  else { renderQuestion(currentIndex + 1); }
+}
+
+function goPrev() {
+  if (currentIndex > 0) renderQuestion(currentIndex - 1);
+}
+
+prevBtn.addEventListener('click', goPrev);
+nextBtn.addEventListener('click', goNext);
+
+// ========== 8. 计算分数 ==========
+function calcScores() {
+  DIMENSIONS.forEach(d => scores[d.key] = 0);
+  questions.forEach((q, i) => {
+    const sel = answers[i];
+    if (sel === null) return;
+    const opt = q.options[sel];
+    if (opt.scores) {
+      for (const [k, v] of Object.entries(opt.scores)) {
+        if (scores[k] !== undefined) scores[k] += v;
+      }
+    }
+  });
+}
+
+// ========== 9. 雷达图 ==========
+function drawRadar(scores) {
+  const ctx = radarCanvas.getContext('2d');
+  const w = radarCanvas.width, h = radarCanvas.height;
+  const cx = w / 2, cy = h / 2 + 10;
+  const R = Math.min(w, h) / 2 - 50;
+  const count = DIMENSIONS.length;
+  const angleStep = (Math.PI * 2) / count;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // 计算最大分数用于归一化
+  const maxScore = Math.max(1, ...DIMENSIONS.map(d => scores[d.key] || 0));
+
+  // 画背景网格
+  for (let level = 1; level <= 5; level++) {
+    const r = (R * level) / 5;
+    ctx.beginPath();
+    for (let i = 0; i <= count; i++) {
+      const angle = -Math.PI / 2 + i * angleStep;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(80,100,150,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 画轴线
+  for (let i = 0; i < count; i++) {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const x = cx + R * Math.cos(angle);
+    const y = cy + R * Math.sin(angle);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = 'rgba(80,100,150,0.25)';
+    ctx.stroke();
+  }
+
+  // 画数据区域
+  ctx.beginPath();
+  DIMENSIONS.forEach((d, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const value = (scores[d.key] || 0) / maxScore;
+    const r = R * value;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(232,180,74,0.25)';
+  ctx.fill();
+  ctx.strokeStyle = '#e8b44a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 画数据点
+  DIMENSIONS.forEach((d, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const value = (scores[d.key] || 0) / maxScore;
+    const r = R * value;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8b44a';
+    ctx.fill();
+  });
+
+  // 画标签
+  DIMENSIONS.forEach((d, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const labelR = R + 28;
+    const x = cx + labelR * Math.cos(angle);
+    const y = cy + labelR * Math.sin(angle);
+    ctx.font = 'bold 11px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = d.sin ? '#ff9b9b' : '#8ee8b0';
+    ctx.fillText(d.name, x, y);
+  });
+}
+
+// ========== 10. 显示结果 ==========
+function showResult() {
+  quizArea.style.display = 'none';
+  resultArea.style.display = 'block';
+
+  calcScores();
+  const { tag, title, desc } = getTagAndDesc(scores);
+
+  resultTag.textContent = `#${tag}`;
+  resultTitle.textContent = title;
+  resultDesc.innerHTML = desc;
+
+  drawRadar(scores);
+}
+
+restartBtn.addEventListener('click', () => {
+  resultArea.style.display = 'none';
+  passGate.style.display = 'block';
+  passwordInput.value = '';
+  resetQuiz();
+});
+</script>
+</body>
+</html>
